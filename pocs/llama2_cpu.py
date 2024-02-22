@@ -2,6 +2,7 @@ from datetime import datetime
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
+
 def llama2_on_cpu(hf_cache_directory, access_token):
     print("hf_cache_directory: " + hf_cache_directory)
     print("access_token: " + access_token)
@@ -10,9 +11,9 @@ def llama2_on_cpu(hf_cache_directory, access_token):
     # get tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf", token=access_token,
                                               cache_dir=hf_cache_directory)
-    model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b-chat-hf", torch_dtype=torch.float16,
+    model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b-chat-hf", torch_dtype=torch.bfloat16,
                                                  token=access_token, cache_dir=hf_cache_directory).to("cpu")
-    
+
     start_time = datetime.now()
     print("Start time: " + start_time.strftime("%H:%M:%S"))
     print("Generating response...")
