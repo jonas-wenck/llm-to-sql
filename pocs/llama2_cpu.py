@@ -19,13 +19,14 @@ def llama2_on_cpu(hf_cache_directory, access_token):
     print("Generating response...")
 
     # create prompt and tokenize it
-    prompt = "Transcript of a dialog where the user interacts with an assistant named Bob. Bob is helpful, kind, honest, good at writing and never fails to answer the user's request immediately and with precision. \
-              User: Hello, Bob. \
-              Bob: Hello. How many I help you today? \
-              User: Please tell me the largest city in Europe. \
-              Bob: Sure. It is Moscow, the capital of Russia. \
-              User: \
-              Write a short message to my friend Lukas that I got the model running. Ask him how his day is going. Don't answer further than the message."
+    prompt = ("You will be given the DDL of a table structure. You task is to generate a SQL statement that solves a given task.\
+        This is the table structure: CREATE TABLE Personnel (\
+        StaffID text(9) CONSTRAINT StaffPK PRIMARY KEY,\
+        LastName text(15) not null,\
+        FirstName text(15) not null,\
+        Birthday date,\
+        Department text(12) null); \
+        This is your task: Find all personal with a birthday after 15.4.1964")
     inputs = tokenizer(prompt, return_tensors="pt").to("cpu")
 
     # generating outputs
