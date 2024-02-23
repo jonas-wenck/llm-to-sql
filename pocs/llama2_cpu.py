@@ -1,11 +1,18 @@
 from datetime import datetime
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
+import os
+from dotenv import load_dotenv
 
 
-def llama2_on_cpu(hf_cache_directory, access_token):
-    print("hf_cache_directory: " + hf_cache_directory)
-    print("access_token: " + access_token)
+def llama2_on_cpu():
+    load_dotenv()
+
+    hf_cache_directory = os.getenv("HF_CACHE_DIRECTORY")
+    access_token = os.getenv("ACCESS_TOKEN")
+    print("Hugging face cache directory from ENV: " + hf_cache_directory)
+    print("Access token from ENV: " + access_token)
+
     print("Getting tokenizer and model ...")
 
     # get tokenizer and model
