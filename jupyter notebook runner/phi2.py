@@ -1,6 +1,7 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 import torch
 from datetime import datetime
+from csv_logger import write_log
 
 def run(client, ddl, prompts, cache_directory, dataset_name):
     print('*** Query generation statistics: ***')
@@ -20,9 +21,11 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
     for i in range(len(prompts)):
         start_time = datetime.now()
         
-        prompt = ("You will be given the DDL of a table structure. You task is to generate a SQL statement that solves a given task.\
+        prompt = ("You will be given the DDL of a table structure. Your task is to generate a SQL statement that solves a given task.\
             This is the table structure:" + ddl + "\
             This is your task: " + prompts[i])
+
+        print('Generating response for prompt ' + str(i + 1) + ': ' + prompts[i])
 
         if client == 'cpu':
             inputs = tokenizer(prompt, return_tensors="pt")
@@ -35,11 +38,14 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
         end_time = datetime.now()
         duration = end_time - start_time
 
-        print('Prompt ' + str(i) + ': ' + prompts[i])
+        
         print('Elapsed time: ' + str(duration.total_seconds()) + ' seconds')
         print('Model response:')
         print(response)
         print('')
+
+        write_log('phi_2_log.csv', 'a', client, 'Phi-2', dataset_name, prompts[i], str(duration.total_seconds()),response)
+            
 
     print('Done processing dataset ' + dataset_name + ' on Phi-2')
     print('')

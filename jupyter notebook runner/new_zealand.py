@@ -12,9 +12,9 @@ PRIMARY KEY CLUSTERED \
 );'
 
 prompts = [
-     'How many of the usual residents of new zealand were born in Germany?'
-    ,'In how many different regions where the usual residents of new zealand born?'
-    ,'How many percent of the usual residents of new zealand where born in new zealand?'
-    ,'In which region outside of new zealand where most usual residents of new zealand born?'
+     'How many of the usual residents of New Zealand were born in Germany?'
+    ,'In how many different regions where the usual residents of New Zealand born?'
+    ,'How many percent of the usual residents of new zealand where born in New Zealand?'
+    ,'In which region outside of new zealand where most usual residents of New Zealand born?'
     ,'Which birthplace region has the highest absolute discrepancy between its amount of usual residents and the census night population?'
 ]
