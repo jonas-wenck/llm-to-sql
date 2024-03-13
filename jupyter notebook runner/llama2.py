@@ -2,6 +2,7 @@ from datetime import datetime
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from csv_logger import write_log
+import constants
 
 
 def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
@@ -10,18 +11,20 @@ def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
     print('Model: ' + 'Llama 2')
     print('Dataset: ' + dataset_name)
 
-    if client == 'cpu':
-        model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b-chat-hf", torch_dtype=torch.bfloat16,
-                                                     token=access_token, cache_dir=cache_directory)
-    elif client == 'gpu_3070':
-        model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b-chat-hf", torch_dtype=torch.bfloat16,
-                                                     token=access_token, cache_dir=cache_directory).to("cuda")
-    elif client == 'gpu_4090':
-        model = AutoModelForCausalLM.from_pretrained("meta-llama/Llama-2-7b-chat-hf", torch_dtype=torch.bfloat16,
-                                                     token=access_token, cache_dir=cache_directory).to("cuda")
+    llama2_model_path = 'meta-llama/Llama-2-7b-chat-hf'
 
-    tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-2-7b-chat-hf", token=access_token,
-                                              cache_dir=cache_directory)
+    if client == constants.CPU:
+        model = AutoModelForCausalLM.from_pretrained(llama2_model_path, torch_dtype=torch.bfloat16,
+                                                     token=access_token, cache_dir=cache_directory)
+    elif client == constants.GPU_3070:
+        model = AutoModelForCausalLM.from_pretrained(llama2_model_path, torch_dtype=torch.bfloat16,
+                                                     token=access_token, cache_dir=cache_directory).to(constants.CUDA)
+    elif client == constants.GPU_4090:
+        model = AutoModelForCausalLM.from_pretrained(llama2_model_path, torch_dtype=torch.bfloat16,
+                                                     token=access_token, cache_dir=cache_directory).to(constants.CUDA)
+
+    tokenizer = AutoTokenizer.from_pretrained(llama2_model_path, token=access_token, cache_dir=cache_directory)
+
     for i in range(len(prompts)):
         start_time = datetime.now()
 
@@ -31,7 +34,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
 
         print('Generating response for prompt ' + str(i + 1) + ': ' + prompts[i])
 
-        if client == 'cpu':
+        if client == constants.CPU:
             inputs = tokenizer(prompt, return_tensors="pt")
         elif client[:3] == 'gpu':
             inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
