@@ -24,13 +24,19 @@ def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
                                                      token=access_token, cache_dir=cache_directory).to(constants.CUDA)
 
     tokenizer = AutoTokenizer.from_pretrained(llama2_model_path, token=access_token, cache_dir=cache_directory)
+    # the system prompt instructs Llama-2 abouts its role and is therefore the same
+    system_prompt = ("You will be given the DDL of a table structure of a SQL database. You will also be given a question.\
+                     Your task is to generate a SQL query that can be run on the given table structure to answer the given question.\
+                     Do not repeat your task in your response. Only include your SQL query in the response.")
 
     for i in range(len(prompts)):
         start_time = datetime.now()
 
-        prompt = ("You will be given the DDL of a table structure. You task is to generate a SQL statement that solves a given task.\
-            This is the table structure:" + ddl + "\
-            This is your task: " + prompts[i])
+        ddl_and_task = f"""This is the table structure: {ddl} \
+                This is the question: {prompts[i]}"""
+
+        # this is the desired prompt structure for Llama-2 as described here: https://developer.ibm.com/tutorials/awb-prompt-engineering-llama-2/
+        prompt = f"""<s>[INST] <<SYS>>{system_prompt}<</SYS>>{ddl_and_task} [/INST]"""
 
         print('Generating response for prompt ' + str(i + 1) + ': ' + prompts[i])
 
