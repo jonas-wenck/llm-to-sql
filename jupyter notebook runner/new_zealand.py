@@ -1,15 +1,14 @@
 # DDL und prompts für die Neuseeland Datenquelle
 
-ddl = 'CREATE TABLE [dbo].[new_zealand_birthplace_2018_census](\
-	[Code] [int] NOT NULL,\
-	[Birthplace] [nvarchar](150) NULL,\
-	[Census_night_population_count] [int] NULL,\
-	[Census_usually_resident_population_count] [int] NULL,\
-PRIMARY KEY CLUSTERED \
-(\
-	[Code] ASC\
- )\
-);'
+ddl = """
+CREATE TABLE [dbo].[new_zealand_birthplace_2018_census](
+	[Code] [int] NOT NULL,
+	[Birthplace] [nvarchar](150) NULL,
+	[Census_night_population_count] [int] NULL,
+	[Census_usually_resident_population_count] [int] NULL,
+PRIMARY KEY CLUSTERED ([Code] ASC)
+);
+"""
 
 prompts = [
      'How many of the usual residents of New Zealand were born in Germany?'
