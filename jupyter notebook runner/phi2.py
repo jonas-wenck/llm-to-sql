@@ -37,7 +37,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
         elif client[:3] == 'gpu':
             inputs = tokenizer(prompt, return_tensors="pt").to(constants.CUDA)
 
-        outputs = model.generate(**inputs, max_length=1000)
+        outputs = model.generate(**inputs, max_length=len(prompt) + 500)
         response = tokenizer.batch_decode(outputs)[0]
 
         end_time = datetime.now()
