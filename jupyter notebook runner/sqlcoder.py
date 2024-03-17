@@ -68,9 +68,8 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
     print('')
 
 def load_model(client, model_path, cache_directory):
-    # TODO: Check this
     if client == constants.CPU:
-        #model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, torch_dtype=torch.float32, cache_dir=cache_directory)
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float32, cache_dir=cache_directory)
         pass
     
     elif client == constants.GPU_3070:
@@ -79,7 +78,7 @@ def load_model(client, model_path, cache_directory):
             llm_int8_enable_fp32_cpu_offload=True 
         )
 
-        model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
+        model = AutoModelForCausalLM.from_pretrained(model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
  
     elif client == constants.GPU_4090:
         bnb_config = BitsAndBytesConfig(
@@ -87,6 +86,6 @@ def load_model(client, model_path, cache_directory):
             llm_int8_enable_fp32_cpu_offload=True 
         )
 
-        model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
+        model = AutoModelForCausalLM.from_pretrained(model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
     
     return model
