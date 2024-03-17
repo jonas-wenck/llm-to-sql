@@ -12,11 +12,11 @@ PRIMARY KEY CLUSTERED ([id] ASC)
 
 CREATE TABLE [dbo].[us_states_population](
 	[Geographic_Area] [nvarchar](150) NULL,
-	[20200401_Estimates_Base] [int] NULL,
-	[20200701_Population_Estimate] [int] NULL,
-	[20210701_Population_Estimate] [int] NULL,
-	[20220701_Population_Estimate] [int] NULL,
-	[20230701_Population_Estimate] [int] NULL,
+	[Population_Estimate_of_20200401] [int] NULL,
+	[Population_Estimate_of_20200701] [int] NULL,
+	[Population_Estimate_of_20210701] [int] NULL,
+	[Population_Estimate_of_20220701] [int] NULL,
+	[Population_Estimate_of_20230701] [int] NULL,
 	[ID] [int] NOT NULL,
 PRIMARY KEY CLUSTERED ([ID] ASC)
 );
