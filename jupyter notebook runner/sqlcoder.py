@@ -4,6 +4,7 @@ import torch
 from datetime import datetime
 from csv_logger import write_log
 import constants
+import gc
 
 
 def run(client, ddl, prompts, cache_directory, dataset_name):
@@ -13,28 +14,6 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
     print('Dataset: ' + dataset_name)
 
     sqlcoder_model_path = 'defog/sqlcoder2'
-
-    # TODO: Check this
-    if client == constants.CPU:
-        #model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, torch_dtype=torch.float32, cache_dir=cache_directory)
-        pass
-    
-    elif client == constants.GPU_3070:
-        bnb_config = BitsAndBytesConfig(
-            load_in_8bit=True,
-            llm_int8_enable_fp32_cpu_offload=True 
-        )
-
-        model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, quantization_config=bnb_config, device_map="auto")
-
-    # TODO: Check
-    elif client == constants.GPU_4090:
-        bnb_config = BitsAndBytesConfig(
-            load_in_8bit=True,
-            llm_int8_enable_fp32_cpu_offload=True 
-        )
-
-        model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, quantization_config=bnb_config, device_map="auto")
 
     tokenizer = AutoTokenizer.from_pretrained(sqlcoder_model_path, cache_dir=cache_directory)
 
@@ -64,7 +43,9 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
         elif client[:3] == 'gpu':
             inputs = tokenizer(prompt, return_tensors="pt").to(constants.CUDA)
 
-        outputs = model.generate(**inputs, max_length=len(prompts[i]) + 500)
+        model = load_model(client, sqlcoder_model_path, cache_directory)
+        
+        outputs = model.generate(**inputs, max_length=len(prompt) + 300)
         response = tokenizer.batch_decode(outputs)[0]
 
         end_time = datetime.now()
@@ -78,5 +59,34 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
 
         write_log('sqlcoder_log.csv', 'a', start_time, client, 'SQLCoder', dataset_name, i, prompts[i], duration, response)
 
+        # cleanup
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
+
     print('Done processing dataset ' + dataset_name + ' on SQLCoder')
     print('')
+
+def load_model(client, model_path, cache_directory):
+    # TODO: Check this
+    if client == constants.CPU:
+        #model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, torch_dtype=torch.float32, cache_dir=cache_directory)
+        pass
+    
+    elif client == constants.GPU_3070:
+        bnb_config = BitsAndBytesConfig(
+            load_in_8bit=True,
+            llm_int8_enable_fp32_cpu_offload=True 
+        )
+
+        model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
+ 
+    elif client == constants.GPU_4090:
+        bnb_config = BitsAndBytesConfig(
+            load_in_8bit=True,
+            llm_int8_enable_fp32_cpu_offload=True 
+        )
+
+        model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
+    
+    return model

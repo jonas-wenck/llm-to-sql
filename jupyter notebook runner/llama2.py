@@ -3,7 +3,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from csv_logger import write_log
 import constants
-
+import gc
 
 def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
     print('*** Query generation statistics: ***')
@@ -12,16 +12,6 @@ def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
     print('Dataset: ' + dataset_name)
 
     llama2_model_path = 'meta-llama/Llama-2-7b-chat-hf'
-
-    if client == constants.CPU:
-        model = AutoModelForCausalLM.from_pretrained(llama2_model_path, torch_dtype=torch.bfloat16,
-                                                     token=access_token, cache_dir=cache_directory)
-    elif client == constants.GPU_3070:
-        model = AutoModelForCausalLM.from_pretrained(llama2_model_path, torch_dtype=torch.bfloat16,
-                                                     token=access_token, cache_dir=cache_directory).to(constants.CUDA)
-    elif client == constants.GPU_4090:
-        model = AutoModelForCausalLM.from_pretrained(llama2_model_path, torch_dtype=torch.bfloat16,
-                                                     token=access_token, cache_dir=cache_directory).to(constants.CUDA)
 
     tokenizer = AutoTokenizer.from_pretrained(llama2_model_path, token=access_token, cache_dir=cache_directory)
     # the system prompt instructs Llama-2 abouts its role and is therefore the same
@@ -45,8 +35,10 @@ def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
         elif client[:3] == 'gpu':
             inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
 
+        model = load_model(client, llama2_model_path, cache_directory, access_token)
+
         # Llama-2 always returns the whole prompt in the response, so we need to use a high value for max new tokens
-        outputs = model.generate(**inputs, max_new_tokens=500)
+        outputs = model.generate(**inputs, max_length=len(prompt) + 300)
         response = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
         end_time = datetime.now()
@@ -60,5 +52,23 @@ def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
 
         write_log('llama2_log.csv', 'a', start_time, client, 'Llama 2', dataset_name, i, prompts[i], duration, response)
 
+        # cleanup
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
+
     print('Done processing dataset ' + dataset_name + ' on Llama 2')
     print('')
+
+def load_model(client, model_path, cache_directory, access_token):
+    if client == constants.CPU:
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16,
+                                                     token=access_token, cache_dir=cache_directory)
+    elif client == constants.GPU_3070:
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16,
+                                                     token=access_token, cache_dir=cache_directory).to(constants.CUDA)
+    elif client == constants.GPU_4090:
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16,
+                                                     token=access_token, cache_dir=cache_directory).to(constants.CUDA)
+    return model
+    
