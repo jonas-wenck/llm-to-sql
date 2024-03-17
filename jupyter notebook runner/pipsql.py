@@ -2,6 +2,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from datetime import datetime
 from csv_logger import write_log
 import constants
+import gc
 
 
 def run(client, ddl, prompts, cache_directory, dataset_name):
@@ -11,15 +12,6 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
     print('Dataset: ' + dataset_name)
 
     pipsql_model_path = 'PipableAI/pip-sql-1.3b'
-
-    if client == constants.CPU:
-        model = AutoModelForCausalLM.from_pretrained(pipsql_model_path, cache_dir=cache_directory)
-    elif client == constants.GPU_3070:
-        model = AutoModelForCausalLM.from_pretrained(pipsql_model_path, cache_dir=cache_directory).to(
-            constants.CUDA)
-    elif client == constants.GPU_4090:
-        model = AutoModelForCausalLM.from_pretrained(pipsql_model_path, cache_dir=cache_directory).to(
-            constants.CUDA)
 
     tokenizer = AutoTokenizer.from_pretrained(pipsql_model_path, cache_dir=cache_directory)
 
@@ -37,7 +29,9 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
         elif client[:3] == 'gpu':
             inputs = tokenizer(prompt, return_tensors="pt").to(constants.CUDA)
 
-        outputs = model.generate(**inputs, max_new_tokens=200)
+        model = load_model(client, pipsql_model_path, cache_directory)
+
+        outputs = model.generate(**inputs, max_length=len(prompt) + 300)
         response = tokenizer.decode(outputs[0], skip_special_tokens=True).split('<sql>')[1].split('</sql>')[0]
 
         end_time = datetime.now()
@@ -51,5 +45,21 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
 
         write_log('pipsql_log.csv', 'a', start_time, client, 'pipSQL', dataset_name, i, prompts[i], duration, response)
 
+        # cleanup
+        del model
+        gc.collect()
+        torch.cuda.empty_cache()
+
     print('Done processing dataset ' + dataset_name + ' on pipSQL')
     print('')
+
+def load_model(client, model_path, cache_directory):
+    if client == constants.CPU:
+        model = AutoModelForCausalLM.from_pretrained(pipsql_model_path, cache_dir=cache_directory)
+    elif client == constants.GPU_3070:
+        model = AutoModelForCausalLM.from_pretrained(pipsql_model_path, cache_dir=cache_directory).to(
+            constants.CUDA)
+    elif client == constants.GPU_4090:
+        model = AutoModelForCausalLM.from_pretrained(pipsql_model_path, cache_dir=cache_directory).to(
+            constants.CUDA)
+    return model
