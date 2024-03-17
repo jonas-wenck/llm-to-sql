@@ -5,7 +5,7 @@ from csv_logger import write_log
 import constants
 import gc
 
-def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
+def run(client, ddl, prompts, cache_directory, dataset_name, access_token, additional_context=None):
     print('*** Query generation statistics: ***')
     print('Client: ' + client)
     print('Model: ' + 'Llama 2')
@@ -22,8 +22,13 @@ def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
     for i in range(len(prompts)):
         start_time = datetime.now()
 
+        additional_context_prompt = f"""                
+        This is some additional context about the table structures: {additional_context}
+        """
         ddl_and_task = f"""This is the table structure: {ddl} \
-                This is the question: {prompts[i]}"""
+        {'' if additional_context is None else additional_context_prompt}
+        This is the question: {prompts[i]}
+        """
 
         # this is the desired prompt structure for Llama-2 as described here: https://developer.ibm.com/tutorials/awb-prompt-engineering-llama-2/
         prompt = f"""<s>[INST] <<SYS>>{system_prompt}<</SYS>>{ddl_and_task} [/INST]"""
@@ -50,7 +55,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name, access_token):
         print(response)
         print('')
 
-        write_log('llama2_log.csv', 'a', start_time, client, 'Llama 2', dataset_name, i, prompts[i], duration, response)
+        write_log('llama2_log.csv', 'a', start_time, client, 'Llama 2', dataset_name, i, prompts[i], duration, response, False if additional_context is None else True)
 
         # cleanup
         del model

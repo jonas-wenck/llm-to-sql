@@ -6,7 +6,7 @@ import constants
 import gc
 
 
-def run(client, ddl, prompts, cache_directory, dataset_name):
+def run(client, ddl, prompts, cache_directory, dataset_name, additional_context=None):
     print('*** Query generation statistics: ***')
     print('Client: ' + client)
     print('Model: ' + 'Phi-2')
@@ -14,14 +14,19 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
 
     phi2_model_path = 'microsoft/phi-2'
 
-    tokenizer = AutoTokenizer.from_pretrained(phi2_model_path, cache_dir=cache_directory)
+    tokenizer = AutoTokenizer.from_pretrained(phi2_model_path, cache_dir=cache_directory, additional_context=None)
 
     for i in range(len(prompts)):
         start_time = datetime.now()
 
-        prompt = ("You will be given the DDL of a table structure. Your task is to generate a SQL statement that solves a given task.\
-            This is the table structure:" + ddl + "\
-            This is your task: " + prompts[i])
+        additional_context_prompt = f"""
+        This is some additional context about the table structures: {additional_context}\
+        """
+
+        prompt = (f"""You will be given the DDL of a table structure. Your task is to generate a SQL statement that solves a given task.\
+            This is the table structure: {ddl}\
+            {'' if additional_context is None else additional_context_prompt}
+            This is your task: {prompts[i]}""")
 
         print('Generating response for prompt ' + str(i + 1) + ': ' + prompts[i])
 
@@ -44,7 +49,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
         print(response)
         print('')
 
-        write_log('phi_2_log.csv', 'a', start_time, client, 'Phi-2', dataset_name, i, prompts[i], duration, response)
+        write_log('phi_2_log.csv', 'a', start_time, client, 'Phi-2', dataset_name, i, prompts[i], duration, response, False if additional_context is None else True)
 
         # cleanup
         del model

@@ -7,7 +7,7 @@ import constants
 import gc
 
 
-def run(client, ddl, prompts, cache_directory, dataset_name):
+def run(client, ddl, prompts, cache_directory, dataset_name, additional_context=None):
     print('*** Query generation statistics: ***')
     print('Client: ' + client)
     print('Model: ' + 'SQLCoder')
@@ -20,21 +20,28 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
     for i in range(len(prompts)):
         start_time = datetime.now()
 
-        prompt = ("\
+        additional_context_prompt = f"""
+        This is some additional context about the table structures: \
+        {additional_context} \
+        \
+        """
+
+        prompt = (f"""\
         ### Task \
-        Generate a SQL query to answer [QUESTION]" + prompts[i] + "[/QUESTION] \
+        Generate a SQL query to answer [QUESTION] {prompts[i]} [/QUESTION] \
         \
         ### Instructions \
         - If you cannot answer the question with the available database schema, return 'I do not know' \
         \
         ### Database Schema \
         The query will run on a database with the following schema: \
-        " + ddl + " \
+        {ddl} \
         \
+        {'' if additional_context is None else additional_context_prompt}
         ### Answer \
-        Given the database schema, here is the SQL query that answers [QUESTION]{user_question}[/QUESTION] \
+        Given the database schema, here is the SQL query that answers [QUESTION]{prompts[i]}[/QUESTION] \
         [SQL] \
-            ")
+            """)
 
         print('Generating response for prompt ' + str(i + 1) + ': ' + prompts[i])
 
@@ -57,7 +64,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
         print(response)
         print('')
 
-        write_log('sqlcoder_log.csv', 'a', start_time, client, 'SQLCoder', dataset_name, i, prompts[i], duration, response)
+        write_log('sqlcoder_log.csv', 'a', start_time, client, 'SQLCoder', dataset_name, i, prompts[i], duration, response, False if additional_context is None else True)
 
         # cleanup
         del model
@@ -68,9 +75,8 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
     print('')
 
 def load_model(client, model_path, cache_directory):
-    # TODO: Check this
     if client == constants.CPU:
-        #model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, torch_dtype=torch.float32, cache_dir=cache_directory)
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float32, cache_dir=cache_directory)
         pass
     
     elif client == constants.GPU_3070:
@@ -79,7 +85,7 @@ def load_model(client, model_path, cache_directory):
             llm_int8_enable_fp32_cpu_offload=True 
         )
 
-        model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
+        model = AutoModelForCausalLM.from_pretrained(model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
  
     elif client == constants.GPU_4090:
         bnb_config = BitsAndBytesConfig(
@@ -87,6 +93,6 @@ def load_model(client, model_path, cache_directory):
             llm_int8_enable_fp32_cpu_offload=True 
         )
 
-        model = AutoModelForCausalLM.from_pretrained(sqlcoder_model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
+        model = AutoModelForCausalLM.from_pretrained(model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
     
     return model
