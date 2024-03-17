@@ -1,7 +1,8 @@
-from openai import OpenAI
 from datetime import datetime
+
+from openai import OpenAI
+
 from csv_logger import write_log
-import constants
 
 
 def run(client, ddl, prompts, dataset_name):
