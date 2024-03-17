@@ -79,23 +79,7 @@ CREATE TABLE [dbo].[wind](
 	[Wind_Direction] [varchar](50) NULL,
 	[Date_Time_Measured] [datetime] NULL
 );
-
-ALTER TABLE [dbo].[air_temperature]  WITH CHECK ADD CONSTRAINT [FK_air_temperature_station] FOREIGN KEY([STATIONS_ID])
-REFERENCES [dbo].[station] ([Stations_id]);
-
-ALTER TABLE [dbo].[air_temperature] CHECK CONSTRAINT [FK_air_temperature_station];
-
-ALTER TABLE [dbo].[cloudiness]  WITH CHECK ADD CONSTRAINT [FK_cloudiness_station] FOREIGN KEY([STATIONS_ID])
-REFERENCES [dbo].[station] ([Stations_id]);
-
-ALTER TABLE [dbo].[cloudiness] CHECK CONSTRAINT [FK_cloudiness_station];
-
-ALTER TABLE [dbo].[visibility]  WITH CHECK ADD CONSTRAINT [FK_visibility_station] FOREIGN KEY([STATIONS_ID])
-REFERENCES [dbo].[station] ([Stations_id]);
-
-ALTER TABLE [dbo].[visibility] CHECK CONSTRAINT [FK_visibility_station];
 """
-
 
 prompts = [
      'What was the highest temperature ever recorded?'
@@ -104,3 +88,11 @@ prompts = [
     ,'Which federal state had the most cloud cover, which had the least? Show a list of all states sorted decending.'
     ,'Is there a correlation between the amount of sunshine and air pressure?'
 ]
+
+additional_context = """
+Use T-SQL syntax.
+There are multiple tables.
+The column 'Station_Name' of the table 'station' is the name of the nearest city.
+The column 'Federal_State' of the table 'station' is the federal state in which the station is located.
+The column 'Has_Precipitation' of the table 'precipitation' is a boolean value. A value of 1 means 'true' and a value of 0 means 'false'. 
+"""

@@ -6,7 +6,7 @@ import constants
 import gc
 
 
-def run(client, ddl, prompts, cache_directory, dataset_name):
+def run(client, ddl, prompts, cache_directory, dataset_name, additional_context=None):
     print('*** Query generation statistics: ***')
     print('Client: ' + client)
     print('Model: ' + 'pipSQL')
@@ -19,8 +19,9 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
     for i in range(len(prompts)):
         start_time = datetime.now()
 
+        prompt_and_additional_context = prompts[i] if additional_context is None else additional_context + prompts[i]
         prompt = f"""<schema>{ddl}</schema>
-            <question>{prompts[i]}</question>
+            <question>{prompt_and_additional_context}</question>
             <sql>"""
 
         print('Generating response for prompt ' + str(i + 1) + ': ' + prompts[i])
@@ -44,7 +45,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
         print(response)
         print('')
 
-        write_log('pipsql_log.csv', 'a', start_time, client, 'pipSQL', dataset_name, i, prompts[i], duration, response)
+        write_log('pipsql_log.csv', 'a', start_time, client, 'pipSQL', dataset_name, i, prompts[i], duration, response, False if additional_context is None else True)
 
         # cleanup
         del model
@@ -53,6 +54,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name):
 
     print('Done processing dataset ' + dataset_name + ' on pipSQL')
     print('')
+
 
 def load_model(client, model_path, cache_directory):
     if client == constants.CPU:
