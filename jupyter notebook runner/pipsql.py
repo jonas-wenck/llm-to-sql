@@ -60,7 +60,7 @@ def load_model(client, model_path, cache_directory):
     if client == constants.CPU:
         model = AutoModelForCausalLM.from_pretrained(model_path, cache_dir=cache_directory)
     elif client == constants.GPU_3070:
-        model = AutoModelForCausalLM.from_pretrained(model_path, cache_dir=cache_directory).to(
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, cache_dir=cache_directory).to(
             constants.CUDA)
     elif client == constants.GPU_4090:
         model = AutoModelForCausalLM.from_pretrained(model_path, cache_dir=cache_directory).to(
