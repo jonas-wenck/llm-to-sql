@@ -13,7 +13,13 @@ def run(client, ddl, prompts, cache_directory, dataset_name, additional_context=
     print('Model: ' + 'SQLCoder')
     print('Dataset: ' + dataset_name)
 
-    sqlcoder_model_path = 'defog/sqlcoder2'
+
+    if client == constants.CPU:
+        sqlcoder_model_path = 'defog/sqlcoder2'
+    elif client == constants.GPU_3070:
+        sqlcoder_model_path = 'defog/sqlcoder-7b-2'
+    elif client == constants.GPU_4090:
+        sqlcoder_model_path = 'defog/sqlcoder2'
 
     tokenizer = AutoTokenizer.from_pretrained(sqlcoder_model_path, cache_dir=cache_directory)
 
@@ -80,12 +86,8 @@ def load_model(client, model_path, cache_directory):
         pass
     
     elif client == constants.GPU_3070:
-        bnb_config = BitsAndBytesConfig(
-            load_in_8bit=True,
-            llm_int8_enable_fp32_cpu_offload=True 
-        )
 
-        model = AutoModelForCausalLM.from_pretrained(model_path, quantization_config=bnb_config, device_map="auto", cache_dir = cache_directory)
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, cache_dir = cache_directory).to(constants.CUDA)
  
     elif client == constants.GPU_4090:
         bnb_config = BitsAndBytesConfig(
