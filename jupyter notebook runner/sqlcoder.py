@@ -15,7 +15,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name, additional_context=
 
 
     if client == constants.CPU:
-        sqlcoder_model_path = 'defog/sqlcoder2'
+        sqlcoder_model_path = 'defog/sqlcoder-7b-2'
     elif client == constants.GPU_3070:
         sqlcoder_model_path = 'defog/sqlcoder-7b-2'
     elif client == constants.GPU_4090:
@@ -82,7 +82,7 @@ def run(client, ddl, prompts, cache_directory, dataset_name, additional_context=
 
 def load_model(client, model_path, cache_directory):
     if client == constants.CPU:
-        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.float32, cache_dir=cache_directory)
+        model = AutoModelForCausalLM.from_pretrained(model_path, torch_dtype=torch.bfloat16, cache_dir=cache_directory)
         pass
     
     elif client == constants.GPU_3070:
